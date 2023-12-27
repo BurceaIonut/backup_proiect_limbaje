@@ -1,0 +1,6 @@
+int a = 4;
+print(a);
+int b = 2.2f;
+/*
+print(b);
+*/
