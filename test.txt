@@ -1,6 +1,9 @@
-int a = 4;
-print(a);
-int b = 2.2f;
-/*
-print(b);
-*/
+int a = 3;
+if(a == 3)
+{
+    print("sunt in if\n");
+}
+else
+{
+    print("sunt in else\n");
+}

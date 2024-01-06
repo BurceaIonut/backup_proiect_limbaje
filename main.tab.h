@@ -83,7 +83,12 @@ extern int yydebug;
     TKN_SINGLE_QUOTE = 284,        /* TKN_SINGLE_QUOTE  */
     TKN_COMMA = 285,               /* TKN_COMMA  */
     TKN_PRINT = 286,               /* TKN_PRINT  */
-    TKN_MESSAGE = 287              /* TKN_MESSAGE  */
+    TKN_SCAN = 287,                /* TKN_SCAN  */
+    TKN_RUN = 288,                 /* TKN_RUN  */
+    TKN_FILENAME = 289,            /* TKN_FILENAME  */
+    TKN_MESSAGE = 290,             /* TKN_MESSAGE  */
+    UMINUS = 291,                  /* UMINUS  */
+    ifx = 292                      /* ifx  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -92,14 +97,14 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 116 "main.y"
+#line 117 "main.y"
 
     char *sir; 
     int nr_integer;
     double nr_double;
     float nr_float;
 
-#line 103 "main.tab.h"
+#line 108 "main.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

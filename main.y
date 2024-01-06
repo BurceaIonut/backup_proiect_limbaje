@@ -6,6 +6,7 @@
     int yylex();
     int yyerror(const char* msg);
     char msg[500];
+    extern FILE *yyin;
 
     class TVAR
     {
@@ -130,8 +131,10 @@
 %token TKN_IF TKN_WHILE TKN_LEFT_CURLY TKN_RIGHT_CURLY TKN_ELSE
 %token TKN_IS_EQUAL TKN_IS_NOT_EQUAL TKN_IS_LOWER TKN_IS_HIGHER TKN_IS_LOWER_OR_EQUAL TKN_IS_HIGHER_OR_EQUAL
 %token TKN_DOUBLE_QUOTE TKN_SINGLE_QUOTE TKN_COMMA
-%token TKN_PRINT
-%token TKN_MESSAGE
+%token TKN_PRINT TKN_SCAN
+%token TKN_RUN
+%token <sir> TKN_FILENAME
+%token <sir> TKN_MESSAGE
 
 %type <nr_float> OPERATION
 %type <nr_integer> COMPARE
@@ -139,6 +142,9 @@
 %start START
 %left  TKN_ADD TKN_SUB
 %left  TKN_MULTIPLICATION TKN_DIVISION
+%left  UMINUS
+%nonassoc ifx
+%nonassoc TKN_ELSE
 
 %%
     START : S
@@ -149,6 +155,8 @@
         | IF {printf("Passed if!\n");}
         | WHILE {printf("Passed while!\n");}
         | PRINT {printf("Print passed!\n");}
+        | SCAN {printf("Scan passed!\n");}
+        | RUN {printf("Run passed!\n");}
         ;
     DECLARE_VAR : TKN_INTEGER TKN_VAR_NAME '=' OPERATION ';'
         {
@@ -243,6 +251,7 @@
             }
         }
         | OPERATION TKN_MULTIPLICATION OPERATION { $$ = $1 * $3; }
+        | TKN_SUB OPERATION %prec UMINUS { $$ = -$2; }
         | TKN_INTEGER_NUMBER { $$ = $1; }
         | TKN_DOUBLE_NUMBER { $$ = $1; }
         | TKN_FLOAT_NUMBER { $$ = $1; }
@@ -258,13 +267,13 @@
             $$ = $2;
         }
         ;
-    IF : TKN_IF TKN_LEFT_PARANTHESIS OPERATION TKN_RIGHT_PARANTHESIS TKN_LEFT_CURLY S TKN_RIGHT_CURLY
-        | TKN_IF TKN_LEFT_PARANTHESIS COMPARE TKN_RIGHT_PARANTHESIS TKN_LEFT_CURLY S TKN_RIGHT_CURLY
-        | TKN_ELSE TKN_LEFT_CURLY S TKN_RIGHT_CURLY
-        | TKN_ELSE IF
+    IF : TKN_IF TKN_LEFT_PARANTHESIS COMPARE TKN_RIGHT_PARANTHESIS BLOCK %prec ifx
+        | TKN_IF TKN_LEFT_PARANTHESIS COMPARE TKN_RIGHT_PARANTHESIS BLOCK TKN_ELSE BLOCK
         ;
     WHILE : TKN_WHILE TKN_LEFT_PARANTHESIS OPERATION TKN_RIGHT_PARANTHESIS TKN_LEFT_CURLY S TKN_RIGHT_CURLY
         | TKN_WHILE TKN_LEFT_PARANTHESIS COMPARE TKN_RIGHT_PARANTHESIS TKN_LEFT_CURLY S TKN_RIGHT_CURLY
+        ;
+    BLOCK : TKN_LEFT_CURLY S TKN_RIGHT_CURLY
         ;
     COMPARE : OPERATION TKN_IS_EQUAL OPERATION
         {
@@ -341,16 +350,70 @@
             }
             else
             {
-                sprintf(msg,"%d:%d Eroare semantica: Variabila %s este utilizata fara sa fi fost declarata!", @1.first_line, @1.first_column, $3);
+                sprintf(msg,"%d:%d Eroare semantica: Variabila %s este utilizata fara sa fi fost declarata!", @3.first_line, @3.first_column, $3);
 	    		yyerror(msg);
 	    		YYERROR;
             }
         }
         | TKN_PRINT TKN_LEFT_PARANTHESIS TKN_MESSAGE TKN_RIGHT_PARANTHESIS ';'
+        {
+            for(int i = 0; i < strlen($3); i++)
+            {
+                if($3[i] == '\\' && $3[i + 1] == 'n')
+                {
+                    cout << endl;
+                    i++;
+                }
+                else if($3[i] == '\\' && $3[i + 1] == 't')
+                {
+                    cout << '\t';
+                    i++;
+                }
+                else cout << $3[i];
+            }
+        }
+        ;
+    SCAN : TKN_SCAN TKN_LEFT_PARANTHESIS TKN_VAR_NAME TKN_RIGHT_PARANTHESIS ';'
+        {
+            if(ts->exists($3))
+            {
+                if(ts->getType($3) == 'i')
+                {
+                    int x;
+                    scanf("%d", &x);
+                    ts->setValue($3, x);
+                }
+                else if(ts->getType($3) == 'd')
+                {
+                    double x;
+                    scanf("%lf", &x);
+                    ts->setValue($3, x);
+                }
+                else if(ts->getType($3) == 'f')
+                {
+                    float x;
+                    scanf("%f", &x);
+                    ts->setValue($3, x);
+                }
+            }
+            else
+            {
+                sprintf(msg,"%d:%d Eroare semantica: Variabila %s este utilizata fara sa fi fost declarata!", @3.first_line, @3.first_column, $3);
+	    		yyerror(msg);
+	    		YYERROR;
+            }
+        }
+        ;
+    RUN : TKN_RUN TKN_FILENAME
+        {
+            yyin = fopen($2, "r");
+            yyparse();
+            //TODO run; merge doar o data, dupa care se inchide parserul
+        }
         ;
 %%
 
-int main()
+int main(int argc, char** argv)
 {
     yyparse();
     ts->printVars();

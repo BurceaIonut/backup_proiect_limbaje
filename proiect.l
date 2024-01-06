@@ -17,7 +17,8 @@
 "while"                                             { colNo+=5; return TKN_WHILE; }
 "else"                                              { colNo+=4; return TKN_ELSE; }
 "print"                                             { colNo+=5; return TKN_PRINT; }
-""
+"scan"                                              { colNo+=4; return TKN_SCAN; }
+"run"                                               { colNo+=3; return TKN_RUN; }
 0|[1-9][0-9]*                                       { 
                                                     yylloc.first_line = lineNo;
                                                     yylloc.first_column = colNo;
@@ -63,17 +64,26 @@
 \"                                                  { colNo++; return TKN_DOUBLE_QUOTE; }
 \'                                                  { colNo++; return TKN_SINGLE_QUOTE; }
 ","                                                 return TKN_COMMA;
-"/"([^]|\+[^/])(\n)""+"/"                           { colNo += strlen(yytext); }
-"//"([^\n]|\+[^/])*                                 { colNo += strlen(yytext); }
-\"[a-zA-Z0-9:,;.\t&%*!?$^#@\-=+_ ]+\"               {
+"/*"([^*]|\*+[^*/])*(\n)*"*"+"/"                    { colNo += strlen(yytext); }
+"//"([^*\n]|\*+[^/])*                               { colNo += strlen(yytext); }
+[ ]                                                 { colNo++; }
+\r\n                                                { lineNo++; colNo = 1; }
+\n                                                  { lineNo++; colNo = 1; }
+\"[a-zA-Z0-9:,;.\\n\\t&%*!?$^#@\-=+_ ]+\"           {
                                                     yylloc.first_line = lineNo;
                                                     yylloc.first_column = colNo;
+                                                    yytext = yytext + 1;
+                                                    yytext[strlen(yytext) - 1] = '\0';
                                                     yylval.sir = new char[strlen(yytext) + 1];
                                                     strcpy(yylval.sir, yytext);
                                                     return TKN_MESSAGE;
                                                     }
-[ ]                                                 { colNo++; }
-\r\n                                                { lineNo++; colNo = 1; }
-\n                                                  { lineNo++; colNo = 1; }
+[a-zA-Z0-9]+[a-zA-Z0-9.]*                           {
+                                                    yylloc.first_line = lineNo;
+                                                    yylloc.first_column = colNo;
+                                                    yylval.sir = new char[strlen(yytext) + 1];
+                                                    strcpy(yylval.sir, yytext);
+                                                    return TKN_FILENAME;
+                                                    }
 .                                                   { colNo++; return TKN_ERROR; }
 %%
