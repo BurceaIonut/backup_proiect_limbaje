@@ -19,6 +19,7 @@
 "print"                                             { colNo+=5; return TKN_PRINT; }
 "scan"                                              { colNo+=4; return TKN_SCAN; }
 "run"                                               { colNo+=3; return TKN_RUN; }
+"return"                                            { colNo+=6; return TKN_RETURN; }
 0|[1-9][0-9]*                                       { 
                                                     yylloc.first_line = lineNo;
                                                     yylloc.first_column = colNo;
@@ -78,7 +79,7 @@
                                                     strcpy(yylval.sir, yytext);
                                                     return TKN_MESSAGE;
                                                     }
-[a-zA-Z0-9]+[a-zA-Z0-9.]*                           {
+[a-zA-Z0-9]+[a-zA-Z0-9._]*                           {
                                                     yylloc.first_line = lineNo;
                                                     yylloc.first_column = colNo;
                                                     yylval.sir = new char[strlen(yytext) + 1];
